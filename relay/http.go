@@ -136,6 +136,7 @@ func (h *HTTP) serveQuery(w http.ResponseWriter, r *http.Request) {
 			r.Header.Get("Authorization"))
 
 		if err == nil {
+			w.Header() := resp.Headers
 			w.Write([]byte(resp.Body))
 		} else {
 			jsonError(w, http.StatusBadRequest, "request failed")
@@ -287,10 +288,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type responseData struct {
-	ContentType     string
-	ContentEncoding string
-	StatusCode      int
-	Body            []byte
+	Headers map[string][]string
+	//ContentType        string
+	//ContentEncoding    string
+	//X-Influxdb-Version string
+	StatusCode         int
+	Body               []byte
 }
 
 func (rd *responseData) Write(w http.ResponseWriter) {
@@ -370,10 +373,12 @@ func (b *simplePoster) post(buf []byte, query string, auth string) (*responseDat
 	}
 
 	return &responseData{
-		ContentType:     resp.Header.Get("Conent-Type"),
-		ContentEncoding: resp.Header.Get("Conent-Encoding"),
-		StatusCode:      resp.StatusCode,
-		Body:            data,
+		Headers:    resp.Header
+		//ContentType:        resp.Header.Get("Content-Type"),
+		//ContentEncoding:    resp.Header.Get("Content-Encoding"),
+		//X-Influxdb-Version: resp.Header.Get("X-Influxdb-Version"),
+		StatusCode: resp.StatusCode,
+		Body:       data,
 	}, nil
 }
 
