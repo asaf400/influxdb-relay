@@ -15,8 +15,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/influxdata/influxdb/models"
 	"math/rand"
+
+	"github.com/influxdata/influxdb/models"
 )
 
 // HTTP is a relay for HTTP influxdb writes
@@ -136,7 +137,9 @@ func (h *HTTP) serveQuery(w http.ResponseWriter, r *http.Request) {
 			r.Header.Get("Authorization"))
 
 		if err == nil {
-			w.Header() := resp.Headers
+			for k, v := range resp.Headers {
+				w.Header().Set(k, v)
+			}
 			w.Write([]byte(resp.Body))
 		} else {
 			jsonError(w, http.StatusBadRequest, "request failed")
@@ -153,7 +156,7 @@ func (h *HTTP) serveQuery(w http.ResponseWriter, r *http.Request) {
 				r.Header.Get("Authorization"))
 
 			if err == nil {
-				continue;
+				continue
 			}
 			// todo fix the partial success
 		}
@@ -288,21 +291,21 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type responseData struct {
-	Headers map[string][]string
+	Headers map[string]string
 	//ContentType        string
 	//ContentEncoding    string
 	//X-Influxdb-Version string
-	StatusCode         int
-	Body               []byte
+	StatusCode int
+	Body       []byte
 }
 
 func (rd *responseData) Write(w http.ResponseWriter) {
-	if rd.ContentType != "" {
-		w.Header().Set("Content-Type", rd.ContentType)
+	if rd.Headers["ContentType"] != "" {
+		w.Header().Set("Content-Type", rd.Headers["ContentType"])
 	}
 
-	if rd.ContentEncoding != "" {
-		w.Header().Set("Content-Encoding", rd.ContentEncoding)
+	if rd.Headers["ContentEncoding"] != "" {
+		w.Header().Set("Content-Encoding", rd.Headers["ContentEncoding"])
 	}
 
 	w.Header().Set("Content-Length", strconv.Itoa(len(rd.Body)))
@@ -372,8 +375,22 @@ func (b *simplePoster) post(buf []byte, query string, auth string) (*responseDat
 		return nil, err
 	}
 
+	// for k, v := range resp.Header {
+	//
+	//   }
+	// Loop through headers
+
+	m := make(map[string]string)
+
+	for name, headers := range resp.Header {
+		name = strings.ToLower(name)
+		for _, h := range headers {
+			m[name] = h
+		}
+	}
+
 	return &responseData{
-		Headers:    resp.Header
+		Headers: m,
 		//ContentType:        resp.Header.Get("Content-Type"),
 		//ContentEncoding:    resp.Header.Get("Content-Encoding"),
 		//X-Influxdb-Version: resp.Header.Get("X-Influxdb-Version"),

@@ -19,3 +19,6 @@
 src
 pkg
 influxdb-relay
+
+#additional files (atom)
+debug*
